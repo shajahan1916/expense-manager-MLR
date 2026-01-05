@@ -17,13 +17,18 @@
 
    php artisan make:seeder UserSeeder /* creates UserSeeder */
 
-6. php artisan make:controller Api/UserController /* creates Api/UserController */
+6. To execute all database migrations
 
-7. To create request validation classes
+    php artisan migrate
+
+
+7. php artisan make:controller Api/UserController /* creates Api/UserController */
+
+8. To create request validation classes
 
     php artisan make:request StoreUserRequest
     php artisan make:request UpdateUserRequest
     php artisan make:request ChangePasswordRequest
 
-8.  To create middleware
+9.  To create middleware
     php artisan make:middleware JwtAuthMiddleware (It will create JwtAuthMiddleware class)
