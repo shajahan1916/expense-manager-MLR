@@ -1,0 +1,23 @@
+In laravel without using artisian command can we execute the migration after deploying the laravel project in shared server?
+Yes, you can execute migrations in Laravel 2026 on a shared server without using the command line (Terminal/SSH). This is commonly done by calling the Artisan command programmatically through a route or controller. 
+1. Using a Web Route (Recommended)
+You can define a temporary route in your routes/web.php file. When you visit this URL in your browser, Laravel will trigger the migration command internally. 
+php
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/run-migrations', function () {
+    // The '--force' flag is required for production environments
+    Artisan::call('migrate', ["--force" => true]);
+    return "Migrations executed successfully!";
+});
+Use code with caution.
+
+2. Implementation Requirements
+The --force Flag: Shared hosting is often treated as a "production" environment by Laravel. Commands that modify the database require the --force flag to run without interactive user confirmation.
+Environment Setup: Ensure your .env file is already updated with your shared server's database credentials before calling this route.
+Security: Do not leave this route public. Once your migrations are complete, delete the route or protect it with an admin middleware to prevent unauthorized database resets. 
+3. Alternative: Manual SQL Import
+If the programmatic method fails due to server restrictions (like execution timeouts), you can:
+Run php artisan migrate --pretend on your local machine to see the raw SQL queries.
+Copy these SQL queries and run them directly in your shared hosting's database tool (e.g., phpMyAdmin). 

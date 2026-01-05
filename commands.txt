@@ -1,0 +1,29 @@
+1. To create a project 
+    composer create-project laravel/laravel projectName
+
+2. To generate APP_KEY
+    php artisan key:generate
+
+3 Install JWT (Production Safe). We will not use Laravel Sanctum here. JWT keeps services decoupled.
+
+    composer require tymon/jwt-auth
+    php artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+    php artisan jwt:secret
+
+4. To create table using migration
+    php artisan make:migration create_users_table /* creates users table */
+
+5. To create a seeder using migration
+
+   php artisan make:seeder UserSeeder /* creates UserSeeder */
+
+6. php artisan make:controller Api/UserController /* creates Api/UserController */
+
+7. To create request validation classes
+
+    php artisan make:request StoreUserRequest
+    php artisan make:request UpdateUserRequest
+    php artisan make:request ChangePasswordRequest
+
+8.  To create middleware
+    php artisan make:middleware JwtAuthMiddleware (It will create JwtAuthMiddleware class)
