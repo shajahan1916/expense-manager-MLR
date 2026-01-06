@@ -6,46 +6,50 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\ChangePasswordRequest;
-use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserController extends Controller
 {
-    /**
-     * Get all users (not deleted)
-     */
+    public function __construct(
+        private UserService $userService
+    ) {}
+
     public function index()
     {
-        $users = User::where('is_deleted', 0)->get();
-
-        return response()->json([
-            'status' => true,
-            'data' => $users
-        ]);
+        try {
+            return response()->json([
+                'status' => true,
+                'data' => $this->userService->getAllUsers()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch users'
+            ], 500);
+        }
     }
 
-    /**
-     * Get single user by GUID
-     */
     public function show(string $guid)
     {
-        $user = User::where('guid', $guid)
-            ->where('is_deleted', 0)
-            ->firstOrFail();
-
-        return response()->json([
-            'status' => true,
-            'data' => $user
-        ]);
+        try {
+            return response()->json([
+                'status' => true,
+                'data' => $this->userService->getUserByGuid($guid)
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
     }
 
-    /**
-     * Create new user
-     */
     public function store(StoreUserRequest $request)
     {
-        $user = User::create($request->validated());
+        $user = $this->userService->createUser($request->validated());
 
         return response()->json([
             'status' => true,
@@ -54,16 +58,9 @@ class UserController extends Controller
         ], 201);
     }
 
-    /**
-     * Update user details
-     */
     public function update(UpdateUserRequest $request, string $guid)
     {
-        $user = User::where('guid', $guid)
-            ->where('is_deleted', 0)
-            ->firstOrFail();
-
-        $user->update($request->validated());
+        $user = $this->userService->updateUser($guid, $request->validated());
 
         return response()->json([
             'status' => true,
@@ -72,16 +69,9 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Change user password
-     */
     public function changePassword(ChangePasswordRequest $request, string $guid)
     {
-        $user = User::where('guid', $guid)
-            ->where('is_deleted', 0)
-            ->firstOrFail();
-
-        $user->update([
+        $this->userService->updateUser($guid, [
             'password' => Hash::make($request->password)
         ]);
 
@@ -91,20 +81,13 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Block or activate user
-     */
     public function updateStatus(Request $request, string $guid)
     {
         $request->validate([
             'status' => 'required|in:active,blocked'
         ]);
 
-        $user = User::where('guid', $guid)
-            ->where('is_deleted', 0)
-            ->firstOrFail();
-
-        $user->update([
+        $this->userService->updateUser($guid, [
             'status' => $request->status
         ]);
 
@@ -114,18 +97,9 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Soft delete user
-     */
     public function destroy(string $guid)
     {
-        $user = User::where('guid', $guid)
-            ->where('is_deleted', 0)
-            ->firstOrFail();
-
-        $user->update([
-            'is_deleted' => 1
-        ]);
+        $this->userService->deleteUser($guid);
 
         return response()->json([
             'status' => true,
