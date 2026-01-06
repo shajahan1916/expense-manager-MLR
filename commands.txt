@@ -32,3 +32,5 @@
 
 9.  To create middleware
     php artisan make:middleware JwtAuthMiddleware (It will create JwtAuthMiddleware class)
+    php artisan make:middleware VerifyJwt
+

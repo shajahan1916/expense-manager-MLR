@@ -9,6 +9,7 @@ class GatewayController extends Controller
 {
     public function handle(Request $request, string $service, ?string $path = null)
     {
+        // Map logical service names to internal URLs
         $serviceMap = [
             'auth'  => config('services.auth_service.url'),
             'users' => config('services.user_service.url'),
@@ -16,31 +17,52 @@ class GatewayController extends Controller
 
         if (!isset($serviceMap[$service])) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Service not found'
             ], 404);
         }
 
-        // IMPORTANT: keep service prefix (auth / users)
-        $url = $serviceMap[$service] . '/' . $service;
+        /*
+         |--------------------------------------------------------------------------
+         | Build Internal Service URL
+         |--------------------------------------------------------------------------
+         | Example:
+         | Gateway:  /api/users
+         | Internal: http://localhost:8002/users
+         */
+        $url = rtrim($serviceMap[$service], '/') . '/' . $service;
 
         if ($path) {
             $url .= '/' . $path;
         }
 
-        $response = Http::withHeaders(
-            collect($request->headers->all())
-                ->map(fn ($v) => $v[0])
-                ->toArray()
-        )->send(
+        /*
+         |--------------------------------------------------------------------------
+         | Forward Request with Headers
+         |--------------------------------------------------------------------------
+         | - Authorization header preserved
+         | - Content-Type preserved
+         | - Query params preserved
+         | - JSON body preserved
+         */
+        $headers = collect($request->headers->all())
+            ->map(fn ($value) => $value[0])
+            ->toArray();
+
+        $response = Http::withHeaders($headers)->send(
             $request->method(),
             $url,
             [
                 'query' => $request->query(),
-                'json'  => $request->all()
+                'json'  => $request->all(),
             ]
         );
 
+        /*
+         |--------------------------------------------------------------------------
+         | Return Response As-Is
+         |--------------------------------------------------------------------------
+         */
         return response()->json(
             $response->json(),
             $response->status()
