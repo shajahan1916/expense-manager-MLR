@@ -1,18 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
-use Symfony\Component\Console\Output\BufferedOutput;
+use App\Http\Controllers\Web\LoginController;
+use App\Http\Controllers\Web\DashboardController;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::middleware('web')->group(function () {
+
+    Route::get('/login', [LoginController::class, 'showLogin']);
+    Route::post('/login', [LoginController::class, 'login']);
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
 });
 
-Route::get('/run-migrations', function () {
-    $outputLog = new BufferedOutput;
-    // Captures the actual terminal text
-    Artisan::call('migrate', ["--force" => true], $outputLog);
-    Artisan::call('db:seed', ['--class' => 'UserSeeder'], $outputLog);
-    
-    return "<pre>" . $outputLog->fetch() . "</pre>";
-});
